@@ -18,9 +18,9 @@ TakoType menampilkan deretan kata acak atau teks kustom yang harus diketik pengg
 - `style.css` — seluruh aturan gaya dan transisi UI.
 - `script.js` — logika aplikasi: penyusunan kata, penanganan input, statistik, dan renderer grafik.
 - `tako.png` — icon / brand image yang digunakan di header dan favicon.
-- (Aset lain seperti ikon dan gambar pendukung berada di folder proyek.)
 
 
 ## Lisensi dan kredit
 Proyek ini adalah contoh kecil dan dapat digunakan/diadaptasi untuk tujuan pribadi atau pembelajaran. Jika ingin menggunakan ulang atau mendistribusikan ulang, sertakan atribusi atau kontak penulis sesuai kebutuhan.
+
 
