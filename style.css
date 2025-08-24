@@ -1,0 +1,598 @@
+:root {
+  /* TakoType (octopus / ocean) palette */
+  --bg: #041227;            /* deep ocean navy */
+  --panel: #06283a;         /* slightly lighter panel */
+  --muted: #98a8b6;         /* muted seafoam */
+  --text: #e6f6ff;          /* pale sea text */
+  --accent: #ff6b81;        /* coral accent */
+  --accent-2: #6b4cff;      /* deep purple accent */
+  --good: #2dd4bf;          /* teal for success */
+  --bad: #ff6b6b;           /* soft red */
+  --warn: #ffb86b;          /* warm warning */
+  --caret: #ffd54f;         /* visible caret color */
+  --card-shadow: 0 10px 36px rgba(2,10,25,0.45);
+  /* slightly softer shadow for small stat cards */
+  --stat-shadow: 0 8px 22px rgba(2,10,25,0.36);
+}
+/* Light theme removed: app uses dark-only theme */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  /* deep ocean background with subtle gradients */
+  background: var(--bg);
+  background-image: radial-gradient(circle at 10% 15%, rgba(107,76,255,0.04), transparent 12%), radial-gradient(circle at 90% 85%, rgba(255,107,129,0.03), transparent 12%);
+  color: var(--text);
+}
+.app {
+  /* make main content wider so it's not too cramped */
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px; /* slightly larger horizontal padding */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative; /* anchor for absolute overlays like stats */
+}
+
+/* When the result screen is visible, reduce the vertical gap so the result panel
+   appears closer to the header. We animate the gap for a smooth change. */
+.app { transition: gap 260ms cubic-bezier(.2,0,.2,1); }
+.result-visible .app { gap: 8px; }
+/* make panels and controls explicitly inherit the global monospace font */
+.panel,
+.controls,
+.controls label,
+select, button, input[type="text"], textarea {
+  font-family: inherit;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 19px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 22px; /* make Takotype name larger */
+  letter-spacing: .3px;
+}
+.brand .dot { display:none; }
+.brand-img { width: 36px; height: 36px; object-fit:contain; display:inline-block; vertical-align:middle; }
+.visually-hidden { position: absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+.panel {
+  background: var(--panel);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: var(--card-shadow);
+  transition: opacity 0.4s cubic-bezier(.4,0,.2,1), visibility 0.4s cubic-bezier(.4,0,.2,1);
+  opacity: 1;
+  visibility: visible;
+}
+/* Global smooth transitions: apply gentle animations to most UI property changes so
+   interactions (show/hide, layout swaps, color/border/shadow changes) feel fluid.
+   The existing `.instant` rule above will disable these when needed. */
+.smooth-transitions,
+.panel,
+.controls,
+.stats,
+.typing,
+.controls > *,
+select,
+button,
+input[type="text"],
+textarea,
+.custom-select,
+.custom-options,
+.stat,
+.result {
+  transition-property: background-color, color, border-color, box-shadow, opacity, transform, height, max-height, width, max-width, padding, margin, gap, grid-template-columns;
+  transition-duration: 260ms;
+  transition-timing-function: cubic-bezier(.2,0,.2,1);
+}
+/* When 'instant' class is present on root, remove animated transitions for immediate swaps */
+.instant .panel,
+.instant .stats,
+.instant .typing,
+.instant .controls {
+  transition: none !important;
+}
+/* ensure instant mode also disables result transitions */
+.instant .result { transition: none !important; }
+.panel[aria-hidden="true"] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.stats {
+  transition: opacity 340ms cubic-bezier(.2,0,.2,1), visibility 340ms cubic-bezier(.2,0,.2,1), transform 340ms cubic-bezier(.2,0,.2,1), max-width 340ms cubic-bezier(.2,0,.2,1);
+  opacity: 1;
+  visibility: visible;
+}
+.stats[aria-hidden="true"] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.typing {
+  transition: opacity 0.4s cubic-bezier(.4,0,.2,1), visibility 0.4s cubic-bezier(.4,0,.2,1);
+  opacity: 1;
+  visibility: visible;
+}
+.typing[aria-hidden="true"] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.controls {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0,1fr));
+  gap: 10px;
+  align-items: center;
+  min-height: 44px;
+  /* reduce vertical padding of controls so the card is less tall */
+  padding: 8px 12px;
+  /* smooth visual transitions for layout changes */
+  transition: max-width 360ms cubic-bezier(.2,0,.2,1), gap 260ms cubic-bezier(.2,0,.2,1), padding 260ms cubic-bezier(.2,0,.2,1), opacity 220ms ease, transform 220ms ease;
+  max-height: 2000px; /* large default to allow natural height */
+}
+
+/* keep controls and stats panels narrower, centered, and add side padding (empty space) */
+.controls, .stats {
+  max-width: 760px; /* slightly smaller container */
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-inline: 12px; /* inner horizontal space so content doesn't touch edges */
+}
+.controls > * { min-width: 0; padding: 4px 0; }
+/* animate individual control items slightly when layout changes */
+.controls > * {
+  transition: transform 260ms cubic-bezier(.2,0,.2,1), opacity 220ms ease;
+}
+
+/* collapsed state: hide and compress the controls smoothly */
+.controls.collapsed {
+  max-height: 0 !important;
+  opacity: 0;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  gap: 0 !important;
+  pointer-events: none;
+}
+
+/* Mode-specific control layouts */
+.controls.controls--timer {
+  grid-template-columns: repeat(5, minmax(0,1fr)); /* mode, testType, duration, difficulty, wordCount */
+  max-width: 920px;
+  transform-origin: center;
+}
+.controls.controls--nontimer {
+  grid-template-columns: repeat(4, minmax(0,1fr)); /* mode, testType, difficulty, wordCount */
+  max-width: 760px;
+  transform-origin: center;
+}
+
+/* When swapped, hide the original control items but keep the controls panel size; stats will be inserted as first child */
+.controls.swapped > *:not(#statsSection) {
+  /* remove from layout entirely so grid tracks collapse and no vertical gap remains */
+  display: none !important;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: none;
+}
+.controls.swapped { justify-items: center; }
+
+/* When controls are swapped into stats mode, remove the outer panel chrome so
+   the inserted #statsSection appears as the single card (prevents nested/padded
+   double-panel visual). We explicitly override the .panel styles here. */
+.controls.swapped {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* When stats is moved into the controls container, make it span the entire controls grid
+   so it keeps the original panel/card appearance instead of being confined to one column. */
+.controls.swapped > #statsSection {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin: 0; /* remove any extra margins that might change appearance */
+  align-self: stretch;
+}
+
+/* compact variant when stats is placed into controls area */
+.controls.swapped > #statsSection {
+  padding: 8px 10px; /* reduce padding to match controls */
+  max-width: 920px; /* match controls max width in timer mode */
+  box-shadow: none; /* keep it visually aligned with controls */
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+.controls.swapped > #statsSection .stat .value { font-size: 22px; }
+.controls.swapped > #statsSection .stat { padding: 6px 4px; }
+
+/* subtle appear animation when stats overlay is inserted */
+.stats.showing {
+  opacity: 1;
+  transform: translateY(0);
+}
+.stats.hiding {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+/* centered variant for when stats replaces controls */
+.stats.centered {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 640px;
+  width: 100%;
+  transform: translateY(0);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 12px;
+  text-align: center;
+}
+
+/* visually hide controls but keep their space (typing box won't move) */
+.controls.visual-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+label {
+  font-size: 12px;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+}
+select, button, input[type="text"], textarea {
+  width: 100%;
+  background: #0d1016;
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+}
+
+/* Styled dropdowns */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text) 50%), linear-gradient(135deg, var(--text) 50%, transparent 50%);
+  background-position: calc(100% - 18px) calc(1em + 2px), calc(100% - 13px) calc(1em + 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 38px;
+  transition: box-shadow .12s ease, transform .06s ease;
+  box-shadow: var(--card-shadow);
+}
+select:focus {
+  box-shadow: var(--card-shadow), 0 0 0 4px rgba(124,92,255,0.08);
+  transform: translateY(-1px);
+}
+select option { background: var(--panel); color: var(--text); }
+button {
+  cursor: pointer;
+  transition: transform .04s ease, opacity .2s ease;
+}
+.button:active { transform: scale(.98); }
+.btn-primary { background: var(--accent); border-color: transparent; color: #fff; }
+.btn-ghost { background: transparent; border-color: rgba(255,255,255,.10); }
+.btn-danger { background: var(--bad); border-color: transparent; }
+
+/* Result back button: better contrast and spacing to avoid overlapping visuals */
+#backBtn.btn-primary {
+  background: linear-gradient(90deg, var(--accent-2), var(--accent));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(6,10,25,0.4);
+  z-index: 2;
+}
+.panel.result #backBtn { margin-top: 12px; }
+
+/* Typing area */
+.typing {
+  position: relative;
+  /* larger padding and min-height to make typing area noticeably bigger than controls */
+  padding: 28px;
+  min-height: 260px;
+  line-height: 2.2;
+  font-size: 26px;
+  font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  border-radius: 18px;
+  user-select: none;
+  margin-top: 8px; /* keep it close to controls/stats */
+}
+
+.word-counter {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--accent);
+  font-weight: 800;
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+.word-counter .sep { color: var(--muted); font-weight: 400; }
+.words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+/* Refresh animation when regenerating words: fade out, replace DOM, fade in */
+.words.refreshing {
+  opacity: 0;
+  transition: opacity 220ms cubic-bezier(.2,0,.2,1);
+  pointer-events: none;
+}
+.words { transition: opacity 260ms cubic-bezier(.2,0,.2,1); }
+
+/* Optional subtle entrance for each word to make refresh feel lively (opacity only) */
+.word { transition: opacity 220ms ease; }
+.word.hidden { opacity: 0; }
+.word {
+  position: relative;
+  padding: 0 2px;
+}
+.char {
+  opacity: .6;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.char.correct {
+  color: var(--good);
+  opacity: 1;
+}
+.char.incorrect {
+  color: var(--bad);
+  opacity: 1;
+}
+.char.current {
+  position:relative;
+  background: rgba(255,107,129,0.12);
+  transition: background 0.3s, box-shadow 0.3s;
+  box-shadow: 0 0 12px rgba(255,107,129,0.12);
+}
+.char.current::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 100%;
+  height: 2px;
+  background: var(--caret);
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+.extra {
+  color: var(--bad);
+  background: rgba(239,68,68,.12);
+  border-radius: 4px;
+  padding: 0 1px;
+}
+.current-word {
+  background: rgba(107,76,255,0.06);
+  border-radius: 6px;
+}
+
+/* Stats area */
+.stats {
+  /* Make stats appear as a single card (panel) so all metrics are together */
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 10px;
+  background: var(--panel);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: var(--card-shadow);
+}
+.stat {
+  /* individual metric tiles should not be full cards; keep them simple inside the stats panel */
+  text-align: center;
+  padding: 8px 6px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  transition: transform .06s ease;
+}
+.stat .value {
+  font-size: 28px;
+  font-weight: 800;
+}
+.stat .label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Result chart styles */
+.result-chart { background: transparent; padding: 6px 0; }
+#resultChart { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius: 8px; }
+
+/* Result layout: left big stats, right chart */
+.result-main { display: flex; gap: 2px; align-items: flex-start; }
+.result-left { width: 100px; display:flex; flex-direction:column; gap:4px; }
+.result-right { flex: 1; }
+.chart-wrap { padding: 0; }
+.big-stats { display:flex; flex-direction:column; gap:18px; }
+.big-stat .label { text-transform: lowercase; color: var(--muted); font-size: 14px; }
+.big-stat .value.big { font-size: 56px; font-weight: 800; color: var(--accent); line-height: 1; }
+.meta { color: var(--muted); font-family: monospace; font-size: 13px; }
+.small-stats { padding: 0; gap: 4px; display: grid; grid-template-columns: 1fr; width: 100px; margin-top: 0 !important; }
+.small-stats .stat { padding: 1px 3px; }
+.small-stats .stat .value { font-size: 18px; }
+
+/* Legend and tooltip for result chart */
+.result-legend { display:flex; gap:12px; align-items:center; color:var(--muted); font-family: monospace; }
+.legend-item { display:flex; gap:6px; align-items:center; }
+.swatch { width:12px; height:8px; border-radius:2px; display:inline-block; }
+.swatch-wpm { background: rgba(255,199,0,1); }
+.swatch-err { background: rgba(180,180,180,0.9); }
+
+.chart-wrap { position: relative; }
+.chart-tooltip { position: absolute; background: rgba(2,6,12,0.9); color: #fff; padding: 6px 8px; border-radius: 6px; font-family: monospace; font-size: 12px; pointer-events: none; transform: translate(-50%,-120%); box-shadow: 0 6px 20px rgba(0,0,0,0.5); display: none; z-index: 2000; }
+
+/* Footer */
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+.kbd {
+  background: rgba(255,255,255,.08);
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.12);
+  font-family: inherit;
+}
+
+/* Hidden input */
+.hidden-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  background: rgba(0,0,0,.6);
+  padding: 20px;
+}
+.modal.active { display: grid; }
+.modal-card {
+  background: var(--panel);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  padding: 20px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: var(--card-shadow);
+}
+.modal h3 {
+  margin: 0 0 10px;
+  font-size: 22px;
+}
+.modal .grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 10px;
+  margin: 12px 0 16px;
+}
+.muted { color: var(--muted); }
+
+/* Result panel transition: smooth appear/disappear when showing test results */
+.result {
+  transition: opacity 280ms cubic-bezier(.2,0,.2,1), transform 280ms cubic-bezier(.2,0,.2,1), visibility 280ms;
+  opacity: 0;
+  transform: translateY(8px);
+  visibility: hidden;
+  pointer-events: none;
+}
+.result.show {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+  .controls { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .typing { font-size: 20px; }
+}
+
+/* Custom select replacement styles */
+.custom-select {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+.custom-select .trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: inherit;
+  border: 1px solid rgba(255,255,255,.08);
+  cursor: pointer;
+}
+.custom-select .trigger:focus {
+  outline: none;
+  box-shadow: var(--card-shadow), 0 0 0 4px rgba(124,92,255,0.08);
+}
+/* light-theme overrides removed */
+.custom-select .trigger .label {
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.custom-select .arrow {
+  width: 18px; height: 18px; display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--muted);
+}
+.custom-options {
+  position: absolute;
+  z-index: 60;
+  left: 0; right: 0;
+  margin-top: 8px;
+  border-radius: 10px;
+  max-height: 220px;
+  overflow: auto;
+  background: var(--panel);
+  border: 1px solid rgba(255,255,255,.06);
+  box-shadow: var(--card-shadow);
+  padding: 6px;
+  /* use opacity+transform for smoother/faster open-close across themes */
+  opacity: 0;
+  transform: translateY(-6px) scale(0.995);
+  pointer-events: none;
+  transition: opacity .12s ease, transform .12s ease;
+  will-change: opacity, transform;
+}
+.custom-select.open .custom-options { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.custom-option {
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+}
+.custom-option:hover,
+.custom-option.focused { background: rgba(107,76,255,0.06); }
+.custom-option.selected { font-weight: 700; color: var(--accent-2); background: rgba(107,76,255,0.08); }
+.custom-options::-webkit-scrollbar { width: 10px; }
+.custom-options::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 8px; }
+
+/* Hide the native select but keep it for form/value sync */
+.custom-select .native-select-hidden { display: none; }
+select.native-hidden { position: absolute !important; left: -9999px !important; }
+
+/* stats use --card-shadow now */

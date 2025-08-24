@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Takotype</title>
+  <link rel="icon" type="image/png" href="tako.png">
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Fira+Code:wght@400;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <div class="brand">
+        <img src="tako.png" alt="Takotype" class="brand-img" />
+        <span>Takotype</span>
+      </div>
+      <div style="display:flex; gap:8px">
+        <!-- theme toggle removed: app uses dark-only mode -->
+      </div>
+    </header>
+
+  <section class="panel controls" id="controlsSection">
+      <div>
+        <label>Mode</label>
+        <select id="mode">
+          <option value="words" selected>Kata Acak</option>
+          <option value="custom">Teks Kustom</option>
+        </select>
+      </div>
+      <div>
+        <label>Mode Tes</label>
+        <select id="testType">
+          <option value="timer" selected>Timer</option>
+          <option value="non-timer">Non-Timer</option>
+        </select>
+      </div>
+      <div id="durationBox">
+        <label>Durasi</label>
+        <select id="duration">
+          <option value="15">15 dtk</option>
+          <option value="30" selected>30 dtk</option>
+          <option value="60">60 dtk</option>
+          <option value="120">120 dtk</option>
+        </select>
+      </div>
+      <div>
+        <label>Kesulitan</label>
+        <select id="difficulty">
+          <option value="basic" selected>Basic</option>
+          <option value="extended">Extended</option>
+          <option value="numbers">Angka</option>
+          <option value="code">Kode</option>
+        </select>
+      </div>
+      <div>
+        <label>Jumlah Kata</label>
+        <select id="wordCount">
+          <option value="15">15</option>
+          <option value="30">30</option>
+          <option value="50" selected>50</option>
+          <option value="100">100</option>
+        </select>
+      </div>
+  <!-- Button mulai dihapus, mulai otomatis saat mengetik -->
+  <!-- focus button removed: input focuses automatically -->
+      <div id="customBox" style="grid-column:1/-1; display:none">
+        <label>Teks Kustom (opsional)</label>
+        <textarea id="customText" rows="3" placeholder="Tempel / ketik teks kamu di sini..."></textarea>
+      </div>
+    </section>
+
+  <section class="panel typing" id="typingBox">
+      <!-- word counter for non-timer mode -->
+      <div class="word-counter" id="wordCounter" aria-hidden="true">
+        <span id="wordsDone">0</span>
+        <span class="sep">/</span>
+        <span id="wordsTotal">0</span>
+      </div>
+      <input id="hiddenInput" class="hidden-input" autocomplete="off" autocapitalize="none" spellcheck="false" />
+      <div id="words" class="words" aria-live="polite"></div>
+    </section>
+
+  <section class="panel stats" id="statsSection">
+      <div class="stat"><div class="value" id="timeVal">30</div><div class="label">Detik</div></div>
+      <div class="stat"><div class="value" id="wpmVal">0</div><div class="label">WPM</div></div>
+      <div class="stat"><div class="value" id="accVal">100%</div><div class="label">Akurasi</div></div>
+      <div class="stat"><div class="value" id="errVal">0</div><div class="label">Salah</div></div>
+    </section>
+    <section class="panel result" id="resultSection" style="display:none">
+      <h3>Hasil Tes</h3>
+      <div class="result-main">
+        <div class="result-left">
+          <div class="grid small-stats" style="margin-top:12px">
+            <div class="stat"><div class="value" id="rwpm">0</div><div class="label">WPM</div></div>
+            <div class="stat"><div class="value" id="racc">0%</div><div class="label">Akurasi</div></div>
+            <div class="stat"><div class="value" id="rerr">0</div><div class="label">Salah</div></div>
+            <div class="stat"><div class="value" id="rtime">0s</div><div class="label">Durasi</div></div>
+          </div>
+        </div>
+        <div class="result-right">
+          <div class="result-legend" style="margin-bottom:8px">
+            <span class="legend-item"><span class="swatch swatch-wpm"></span> WPM</span>
+            <span class="legend-item"><span class="swatch swatch-err"></span> Errors</span>
+          </div>
+          <div class="chart-wrap">
+                <canvas id="resultChart" width="720" height="160" style="width:100%;height:160px;display:block"></canvas>
+                <div id="chartTooltip" class="chart-tooltip" aria-hidden="true"></div>
+          </div>
+          <div class="muted" id="rsum" style="margin-top:10px"></div>
+          <button id="backBtn" class="btn-primary" style="margin-top:12px">Kembali ke Menu Awal (Esc)</button>
+        </div>
+      </div>
+    </section>
+
+  <section class="footer" id="footerSection">
+      <div>
+        <span class="kbd">Esc</span> reset • <span class="kbd">Tab</span> fokus input 
+      </div>
+      <div>Best WPM: <strong id="bestVal">0</strong></div>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
