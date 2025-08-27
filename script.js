@@ -2,13 +2,13 @@
 const WORDS = {
   basic: "dan di ke dari untuk dengan pada oleh sebagai atau tidak sudah akan bisa kalau karena maka namun jadi hanya sangat lebih masih harus telah dapat dalam antara oleh tentang setelah sebelum sampai waktu orang anak hari tahun kita kamu saya mereka itu ini ada juga sudah belum baru baik benar salah besar kecil panjang pendek mudah sulit cepat lambat dekat jauh tinggi rendah berat ringan".split(" "),
   extended: ("adalah apabila akibat aktivitas alamat ambil anak aneh angka antar apa aplikasi arti asal asli atas awal ayah baca badan bagian baik banyak baru bawah bebas beda belajar belum benar bentuk besar bicara bidang bila bingung bisa buat buka bulan bumi budaya buka butuh cari cara catat cepat cerita coba cocok contoh cuaca cukup curah daftar dalam datang daerah dasar data dekat depan derajat desain detik dokter dunia duduk dulu ekonomi efek email empat enak energi enggak enkripsi es evaluasi fakta faktor fasilitas famili fungsi gabung gagal gambar gampang ganjaran garam garis garpu gas gaya gelap gelas gempa generasi geografis gerak geser getar giat gigih gigi gitar golongan goreng gotong guru habis hadiah hafal halaman halus hambatan hampir handal hangat hari hasil hati hidup hijau hilang himpunan hobi hukum hujan huruf ibu ide identitas iklan ilmu imajinasi impian indah industri informasi ingat ingin inisiatif inspirasi instruksi integrasi internet investasi isi istirahat izin jadwal jaga jalan jam jaminan jangkauan jauh jadi jaga jalur jari jasa jatuh jejak jelaskan jemput jendela jenuh jeruk jumlah jumat juga jujur julukan jumlah kabar kaca kaki kalimat kali kamar kampus kamu kanal kantor kapasitas karir kartu kasih kata kawin kaya kerja keras kereta kerjaan kesehatan kesulitan ketua khawatir kita kualitas kuat kuota kurang kusut kutip lagu lain latihan laki-laki lama lambat lampu langit lantai lapangan lapar larangan larut latar lawan layar layu lebar lebih lega lewat listrik lokasi logika lomba luas lupa lurus luwes".split(" ")),
-  numbers: Array.from({length:400},(_,i)=> String(Math.floor(Math.random()*10000))),
+  numbers: Array.from({length:400},()=> String(Math.floor(Math.random() * Math.pow(10, Math.floor(Math.random()*4)+1)))),
   code: (
     [
       // Kata
       "dan", "di", "ke", "dari", "untuk", "dengan", "pada", "oleh", "sebagai", "atau", "tidak", "sudah", "akan", "bisa", "kalau", "karena", "maka", "namun", "jadi", "hanya", "sangat", "lebih", "masih", "harus", "telah", "dapat", "dalam", "antara", "tentang", "setelah", "sebelum", "sampai", "waktu", "orang", "anak", "hari", "tahun", "kita", "kamu", "saya", "mereka", "itu", "ini", "ada", "juga", "belum", "baru", "baik", "benar", "salah", "besar", "kecil", "panjang", "pendek", "mudah", "sulit", "cepat", "lambat", "dekat", "jauh", "tinggi", "rendah", "berat", "ringan",
-      // Angka
-      ...Array.from({length:100},()=> String(Math.floor(Math.random()*10000))),
+      // Angka random 1-4 digit
+      ...Array.from({length:100},()=> String(Math.floor(Math.random() * Math.pow(10, Math.floor(Math.random()*4)+1)))),
       // Simbol spesial
       "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_", "=", "+", "[", "]", "{", "}", ":", ";", "'", "\"", "<", ">", ",", ".", "?", "/", "|"
     ]
@@ -129,8 +129,28 @@ const WORDS = {
           state.words = text ? text.split(' ') : [];
         } else {
           const diff = diffSel.value;
-          const pool = WORDS[diff] || WORDS.basic;
-          state.words = Array.from({length:count},()=> rnd(pool));
+          if(diff === 'code') {
+            // Kombinasi: proporsi manusiawi
+            const kataPool = WORDS.basic;
+            const angkaPool = Array.from({length:100},()=> String(Math.floor(Math.random() * Math.pow(10, Math.floor(Math.random()*4)+1))));
+            const simbolPool = ["!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_", "=", "+", "[", "]", "{", "}", ":", ";", "'", "\"", "<", ">", ",", ".", "?", "/", "|"];
+            const nKata = Math.round(count * 0.7);
+            const nAngka = Math.round(count * 0.2);
+            const nSimbol = count - nKata - nAngka;
+            let arr = [];
+            for(let i=0;i<nKata;i++) arr.push(rnd(kataPool));
+            for(let i=0;i<nAngka;i++) arr.push(rnd(angkaPool));
+            for(let i=0;i<nSimbol;i++) arr.push(rnd(simbolPool));
+            // acak urutan agar tidak berurutan
+            for(let i=arr.length-1;i>0;i--){
+              const j = Math.floor(Math.random()*(i+1));
+              [arr[i],arr[j]]=[arr[j],arr[i]];
+            }
+            state.words = arr;
+          } else {
+            const pool = WORDS[diff] || WORDS.basic;
+            state.words = Array.from({length:count},()=> rnd(pool));
+          }
         }
         buildWords();
         if(wordsTotalEl) wordsTotalEl.textContent = String(state.words.length);
