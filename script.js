@@ -3,7 +3,16 @@ const WORDS = {
   basic: "dan di ke dari untuk dengan pada oleh sebagai atau tidak sudah akan bisa kalau karena maka namun jadi hanya sangat lebih masih harus telah dapat dalam antara oleh tentang setelah sebelum sampai waktu orang anak hari tahun kita kamu saya mereka itu ini ada juga sudah belum baru baik benar salah besar kecil panjang pendek mudah sulit cepat lambat dekat jauh tinggi rendah berat ringan".split(" "),
   extended: ("adalah apabila akibat aktivitas alamat ambil anak aneh angka antar apa aplikasi arti asal asli atas awal ayah baca badan bagian baik banyak baru bawah bebas beda belajar belum benar bentuk besar bicara bidang bila bingung bisa buat buka bulan bumi budaya buka butuh cari cara catat cepat cerita coba cocok contoh cuaca cukup curah daftar dalam datang daerah dasar data dekat depan derajat desain detik dokter dunia duduk dulu ekonomi efek email empat enak energi enggak enkripsi es evaluasi fakta faktor fasilitas famili fungsi gabung gagal gambar gampang ganjaran garam garis garpu gas gaya gelap gelas gempa generasi geografis gerak geser getar giat gigih gigi gitar golongan goreng gotong guru habis hadiah hafal halaman halus hambatan hampir handal hangat hari hasil hati hidup hijau hilang himpunan hobi hukum hujan huruf ibu ide identitas iklan ilmu imajinasi impian indah industri informasi ingat ingin inisiatif inspirasi instruksi integrasi internet investasi isi istirahat izin jadwal jaga jalan jam jaminan jangkauan jauh jadi jaga jalur jari jasa jatuh jejak jelaskan jemput jendela jenuh jeruk jumlah jumat juga jujur julukan jumlah kabar kaca kaki kalimat kali kamar kampus kamu kanal kantor kapasitas karir kartu kasih kata kawin kaya kerja keras kereta kerjaan kesehatan kesulitan ketua khawatir kita kualitas kuat kuota kurang kusut kutip lagu lain latihan laki-laki lama lambat lampu langit lantai lapangan lapar larangan larut latar lawan layar layu lebar lebih lega lewat listrik lokasi logika lomba luas lupa lurus luwes".split(" ")),
   numbers: Array.from({length:400},(_,i)=> String(Math.floor(Math.random()*10000))),
-  code: ("const let var function return if else for while switch case break continue try catch finally throw new class extends import from export default async await Promise resolve reject setTimeout setInterval map filter reduce includes push pop shift unshift length typeof instanceOf null undefined true false === !== == != && || ! >= <= > < [] {} ()".split(" "))
+  code: (
+    [
+      // Kata
+      "dan", "di", "ke", "dari", "untuk", "dengan", "pada", "oleh", "sebagai", "atau", "tidak", "sudah", "akan", "bisa", "kalau", "karena", "maka", "namun", "jadi", "hanya", "sangat", "lebih", "masih", "harus", "telah", "dapat", "dalam", "antara", "tentang", "setelah", "sebelum", "sampai", "waktu", "orang", "anak", "hari", "tahun", "kita", "kamu", "saya", "mereka", "itu", "ini", "ada", "juga", "belum", "baru", "baik", "benar", "salah", "besar", "kecil", "panjang", "pendek", "mudah", "sulit", "cepat", "lambat", "dekat", "jauh", "tinggi", "rendah", "berat", "ringan",
+      // Angka
+      ...Array.from({length:100},()=> String(Math.floor(Math.random()*10000))),
+      // Simbol spesial
+      "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_", "=", "+", "[", "]", "{", "}", ":", ";", "'", "\"", "<", ">", ",", ".", "?", "/", "|"
+    ]
+  )
 };
   // ====== State ======
   const state = {
@@ -106,9 +115,9 @@ const WORDS = {
   }
 
   function regenWords(){
-    const count = Number(wordCountSel.value);
-    const mode = modeSel.value;
-    const diff = diffSel.value;
+  const count = Number(wordCountSel.value);
+  const mode = modeSel.value;
+  // Pilih pool sesuai difficulty
     // if regen called repeatedly, debounce and reuse the same timer
     if(regenWords._timer){ clearTimeout(regenWords._timer); regenWords._timer = null; }
     // animate out
@@ -119,6 +128,7 @@ const WORDS = {
           const text = (customText.value||'Ketik itu seni; konsistensi adalah kuncinya.').trim().replace(/\s+/g,' ');
           state.words = text ? text.split(' ') : [];
         } else {
+          const diff = diffSel.value;
           const pool = WORDS[diff] || WORDS.basic;
           state.words = Array.from({length:count},()=> rnd(pool));
         }
@@ -414,7 +424,12 @@ const WORDS = {
   rWpm.textContent = String(Math.round(wpm));
   rAcc.textContent = Math.round(acc) + '%';
   rErr.textContent = String(state.errors);
-  rTime.textContent = state.duration + 's';
+  // Show correct time for timer/non-timer mode
+  if (testTypeSel && testTypeSel.value === 'timer') {
+    rTime.textContent = state.duration + 's';
+  } else {
+    rTime.textContent = (state.elapsedSeconds || 0) + 's';
+  }
   rSum.textContent = `Kamu mengetik ${state.typed} karakter dengan ${state.errors} salah. Mantap!`;
   // big stats on left
   try{ const b = document.getElementById('rwpmBig'); if(b) b.textContent = String(Math.round(wpm)); }catch(e){}
